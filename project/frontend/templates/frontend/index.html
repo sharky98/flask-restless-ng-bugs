@@ -59,6 +59,7 @@
   </table>
 
   <h2>Item C</h2>
+  <button type="button" class="btn btn-primary addRelationshipGhostSuccess">Add Item C, with two Item A as relation, it won't fail but they will not commit to database.</button>
   <table id="c_item" class="table table-striped table-hover align-middle" style="width:100%">
     <thead>
         <tr>
@@ -156,6 +157,36 @@
       return Math.floor(Math.random() * (max - min) ) + min;
     }
 
+    function assignItemA(c_item) {
+      var postData = {
+        data: [
+          {
+            type: "a_item",
+            id: 1
+          },
+          {
+            type: "a_item",
+            id: 2
+          }
+        ]
+      };
+      $.ajax({
+          url: "/api/c_item/" + c_item.data.id + "/relationships/a_items",
+          contentType: "application/vnd.api+json",
+          headers: {
+            Accept: "application/vnd.api+json",
+          },
+          data: JSON.stringify(postData),
+          method: "POST",
+      }).done(function(data, textStatus) {
+          console.log(data);
+          console.log(textStatus);
+          bootstrap_alert.warning("Item A assigned to Item C <i>" + c_item.data.attributes.name + "</i> (at least according to the API return value.). Refresh to see the result");
+      }).fail(function(jqXHR, textStatus) {
+          bootstrap_alert.danger("Unable to assign Item A to Item C <i>" + c_item.data.attributes.name + "</i>.");
+      })
+  }
+
     $(document).ready( function () {
       // ~~~~ RETRIEVE ITEM A ~~~~
       var a_item_table = $('#a_item').DataTable({
@@ -250,6 +281,34 @@
           bootstrap_alert.success("Created new item A named " + data.data.attributes.name + ". Reload the page to see that table won't load anymore.");
         }).fail(function(jqXHR, textStatus) {
           bootstrap_alert.danger("Unable to create new item A.");
+        });
+      });
+
+
+      // ~~~~ ADD API GHOST RELATIONSHIP ~~~~
+      $('.addRelationshipGhostSuccess').on('click', function() {
+        var randomNumber = getRndInteger(1,500);
+        var postData = {
+          data: {
+            type: "c_item",
+            attributes: {
+              name: "Newly added Item C with Random Number " + randomNumber,
+            }
+          }
+        }
+        $.ajax({
+          url: '/api/c_item',
+          method: "POST",
+          contentType: "application/vnd.api+json",
+          headers: {
+            Accept: "application/vnd.api+json",
+          },
+          data: JSON.stringify(postData),
+        }).done(function(data, textStatus) {
+          bootstrap_alert.success("Created new item C named " + data.data.attributes.name + ".");
+          assignItemA(data);
+        }).fail(function(jqXHR, textStatus) {
+          bootstrap_alert.danger("Unable to create new item C.");
         });
       });
     });
